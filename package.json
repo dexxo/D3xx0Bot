@@ -1,0 +1,18 @@
+{
+  "name": "d3xx0bot",
+  "version": "1.0.0",
+  "description": "discord bot",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "dexxo17@gmail.com",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^0.19.2",
+    "call-of-duty-api": "^1.2.2",
+    "discord.js": "^12.2.0",
+    "form-data": "^3.0.0",
+    "jsdom": "^16.2.2"
+  }
+}
