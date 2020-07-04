@@ -1,4 +1,4 @@
-const { Client, MessageEmbed, EmbedField } = require('discord.js')
+const { Client, MessageEmbed } = require('discord.js')
 const {
   token,
   prefix,
@@ -24,7 +24,7 @@ bot.on('message', message => {
   console.log(user, command, args)
 
   if (message.author.id === adminUserID) {
-    // admin comands
+    // admin commands
     switch (command) {
       case 'server':
         message.guild &&
@@ -34,6 +34,16 @@ bot.on('message', message => {
   }
 
   switch (command) {
+    case 'bothelp': {
+      const msgEmbed = new MessageEmbed()
+      msgEmbed.setTitle('D3xx0Bot help.')
+      msgEmbed.setDescription('Bot commands:')
+      msgEmbed.addField('set platform', '!platform <plataforma>', true)
+      msgEmbed.addField('get payer stats', '!playerinfo <gamertag>', true)
+      msgEmbed.addField('set login', '!login <username> <pass>', true)
+      message.channel.send(msgEmbed)
+      break
+    }
     case 'login':
       user[message.author.id].username = args[0]
       user[message.author.id].password = args[1]
@@ -59,7 +69,7 @@ bot.on('message', message => {
             const { title, username, level, lifetime } = output
             const msgEmbed = new MessageEmbed()
             msgEmbed.setTitle(`${title.toUpperCase()} ${username} Level:${level}`)
-            msgEmbed.setDescription('Battle Royale stats:')
+            msgEmbed.setDescription('Battle Royal stats:')
 
             // set fields to show
             const brObj = lifetime.mode.br.properties
@@ -75,7 +85,6 @@ bot.on('message', message => {
       } else {
         message.reply('set platform before... (!plaform <plaform_name>)')
       }
-
       break
     }
     default:
