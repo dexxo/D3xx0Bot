@@ -1,14 +1,12 @@
 const { Client, MessageEmbed } = require('discord.js')
-const {
-  token,
-  prefix,
-  adminUserID,
-  supportedPlatforms
-} = require('./config.json')
-const bot = new Client()
 const API = require('call-of-duty-api')()
 
+// bot options
+const prefix = '!dx'
+const supportedPlatforms = ['psn', 'steam', 'xbl', 'battle', 'uno']
 const user = {}
+
+const bot = new Client()
 
 bot.on('ready', () => {
   console.log('This bot is online!!!')
@@ -23,7 +21,7 @@ bot.on('message', message => {
 
   console.log(user, command, args)
 
-  if (message.author.id === adminUserID) {
+  if (message.author.id === process.env.ADMIN_ID) {
     // admin commands
     switch (command) {
       case 'server':
@@ -92,4 +90,4 @@ bot.on('message', message => {
   }
 })
 
-bot.login(token)
+bot.login(process.env.BOT_TOKEN)
