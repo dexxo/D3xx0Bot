@@ -19,8 +19,6 @@ bot.on('message', message => {
   const command = args.shift().toLowerCase()
   user[message.author.id] = user[message.author.id] || {}
 
-  console.log(user, command, args)
-
   if (message.author.id === process.env.ADMIN_ID) {
     // admin commands
     switch (command) {
