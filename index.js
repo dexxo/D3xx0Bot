@@ -2,7 +2,7 @@ const { Client, MessageEmbed } = require('discord.js')
 const API = require('call-of-duty-api')()
 
 // bot options
-const prefix = '!dx'
+const prefix = '!'
 const supportedPlatforms = ['psn', 'steam', 'xbl', 'battle', 'uno']
 const user = {}
 
