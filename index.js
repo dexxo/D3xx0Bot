@@ -5,6 +5,7 @@ const { BOT_PREFIX, BOT_TOKEN } = require('./config')
 // bot client
 const bot = new Client()
 // bot commands collection
+const cooldowns = new Collection()
 bot.commands = new Collection()
 // set commands
 commands.forEach(command => bot.commands.set(command.name, command))
@@ -21,16 +22,53 @@ bot.on('message', message => {
     .slice(BOT_PREFIX.length)
     .trim()
     .split(/ +/)
-  const command = args.shift().toLowerCase()
+  const commandName = args.shift().toLowerCase()
 
   // check if command exist
-  if (!bot.commands.has(command)) return
+  const command = bot.commands.get(commandName)
+  if (!command) return
+
+  // check command arguments
+  if (command.hasAgrs && !command.hasAgrs.length) {
+    let reply = `You didn't provide any arguments, ${message.author}!`
+    if (command.usage) {
+      reply += `\nThe proper usage would be: \`${command.usage}\``
+    }
+    return message.channel.send(reply).then(msg => msg.delete(5000))
+  }
+
+  // check command cool down
+  if (command.cooldown) {
+    const now = Date.now()
+    const timestamps = cooldowns.get(command.name)
+    const cooldownAmount = (command.cooldown || 3) * 1000
+
+    if (timestamps.has(message.author.id)) {
+      const expirationTime = timestamps.get(message.author.id) + cooldownAmount
+
+      if (now < expirationTime) {
+        const timeLeft = (expirationTime - now) / 1000
+        return message
+          .reply(
+            `please wait ${timeLeft.toFixed(
+              1
+            )} more second(s) before reusing the \`${command.name}\` command.`
+          )
+          .then(msg => msg.delete(5000))
+      }
+    }
+
+    timestamps.set(message.author.id, now)
+    setTimeout(() => timestamps.delete(message.author.id), cooldownAmount)
+  }
 
   try {
-    bot.commands.get(command).execute(message, args)
+    command.execute(message, args)
   } catch (e) {
     console.error(e)
-    message.reply('there was an error trying to execute that command!')
+    message
+      .reply('there was an error trying to execute that command!')
+      .then(msg => msg.delete(5000))
   }
 })
 

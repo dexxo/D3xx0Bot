@@ -9,6 +9,7 @@ const commands = [
     description: 'login to COD Api',
     usage: `${BOT_PREFIX}login <username> <password>`,
     hasAgrs: true,
+    cooldown: 5,
     execute: login
   }),
   new Command({
@@ -37,6 +38,7 @@ const commands = [
     name: 'playerinfo',
     description: 'gets player info',
     hasAgrs: true,
+    cooldown: 5,
     usage: `${BOT_PREFIX}playerinfo <gamertag>`,
     execute: getPlayerInfo
   })
@@ -53,13 +55,6 @@ function help (message) {
 }
 
 function login (message, args) {
-  if (this.hasAgrs && !this.hasAgrs.length) {
-    let reply = `You didn't provide any arguments, ${message.author}!`
-    if (this.usage) {
-      reply += `\nThe proper usage would be: \`${this.usage}\``
-    }
-    return message.channel.send(reply)
-  }
   user[message.author.id] = user[message.author.id] || {}
   const username = args[0]
   const password = args[1]
@@ -67,13 +62,6 @@ function login (message, args) {
 }
 
 function setPlatform (message, args) {
-  if (this.hasAgrs && !this.hasAgrs.length) {
-    let reply = `You didn't provide any arguments, ${message.author}!`
-    if (this.usage) {
-      reply += `\nThe proper usage would be: \`${this.usage}\``
-    }
-    return message.channel.send(reply)
-  }
   user[message.author.id] = user[message.author.id] || {}
   const platform = args[0]
   if (PLATFORMS.indexOf(platform) !== -1) {
@@ -82,13 +70,6 @@ function setPlatform (message, args) {
 }
 
 function setSource (message, args) {
-  if (this.hasAgrs && !this.hasAgrs.length) {
-    let reply = `You didn't provide any arguments, ${message.author}!`
-    if (this.usage) {
-      reply += `\nThe proper usage would be: \`${this.usage}\``
-    }
-    return message.channel.send(reply)
-  }
   user[message.author.id] = user[message.author.id] || {}
   const source = args[0]
   const supported = Object.keys(SUPPORTED_API).filter(item => item === source)
@@ -121,13 +102,6 @@ function mapPlayerInfoResponse (type, message, response) {
 }
 
 function getPlayerInfo (message, args) {
-  if (this.hasAgrs && !this.hasAgrs.length) {
-    let reply = `You didn't provide any arguments, ${message.author}!`
-    if (this.usage) {
-      reply += `\nThe proper usage would be: \`${this.usage}\``
-    }
-    return message.channel.send(reply)
-  }
   user[message.author.id] = user[message.author.id] || {}
   const gamertag = args[0]
   if (

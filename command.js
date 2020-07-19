@@ -5,7 +5,8 @@ function Command ({
   hasAgrs = false,
   alias = [],
   usage = '',
-  guildOnly = false
+  guildOnly = false,
+  cooldown = null
 }) {
   this.name = name
   this.description = description
@@ -14,6 +15,7 @@ function Command ({
   this.usage = usage
   this.hasAgrs = hasAgrs
   this.guildOnly = guildOnly
+  this.cooldown = cooldown
 }
 
 module.exports = {
