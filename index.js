@@ -1,91 +1,79 @@
-const { Client, MessageEmbed } = require('discord.js')
-const API = require('call-of-duty-api')()
+const { Client, Collection } = require('discord.js')
+const { commands } = require('./commands')
+const { BOT_PREFIX, BOT_TOKEN } = require('./config')
 
-// bot options
-const prefix = '!'
-const supportedPlatforms = ['psn', 'steam', 'xbl', 'battle', 'uno']
-const user = {}
-
+// bot client
 const bot = new Client()
+// bot commands collection
+const cooldowns = new Collection()
+bot.commands = new Collection()
+// set commands
+commands.forEach(command => bot.commands.set(command.name, command))
 
 bot.on('ready', () => {
   console.log('This bot is online!!!')
 })
 
 bot.on('message', message => {
-  if (message.content.charAt(0) !== prefix || message.author.bot) return
+  // do not response to bot message or message that starts with prefix
+  if (!message.content.startsWith(BOT_PREFIX) || message.author.bot) return
 
-  const args = message.content.slice(prefix.length).split(/ +/)
-  const command = args.shift().toLowerCase()
-  user[message.author.id] = user[message.author.id] || {}
+  const args = message.content
+    .slice(BOT_PREFIX.length)
+    .trim()
+    .split(/ +/)
+  const commandName = args.shift().toLowerCase()
 
-  if (message.author.id === process.env.ADMIN_ID) {
-    // admin commands
-    switch (command) {
-      case 'server':
-        message.guild &&
-          message.reply(`This server's name is: ${message.guild.name}`)
-        break
+  // check if command exist
+  const command = bot.commands.get(commandName)
+  if (!command) return
+
+  // check command arguments
+  if (command.hasAgrs && !args.length) {
+    let reply = `You didn't provide any arguments, ${message.author}!`
+    if (command.usage) {
+      reply += `\nThe proper usage would be: \`${command.usage}\``
     }
+    return message.channel.send(reply)
   }
 
-  switch (command) {
-    case 'bothelp': {
-      const msgEmbed = new MessageEmbed()
-      msgEmbed.setTitle('D3xx0Bot help.')
-      msgEmbed.setDescription('Bot commands:')
-      msgEmbed.addField('set platform', '!platform <plataforma>', true)
-      msgEmbed.addField('get payer stats', '!playerinfo <gamertag>', true)
-      msgEmbed.addField('set login', '!login <username> <pass>', true)
-      message.channel.send(msgEmbed)
-      break
+  // check command cool down
+  if (command.cooldown) {
+    if (!cooldowns.has(command.name)) {
+      cooldowns.set(command.name, new Collection())
     }
-    case 'login':
-      user[message.author.id].username = args[0]
-      user[message.author.id].password = args[1]
-      API.login(
-        user[message.author.id].username,
-        user[message.author.id].password
-      )
-        .then(res => console.log(res))
-        .catch(err => console.log(err))
-      break
-    case 'platform':
-      if (supportedPlatforms.indexOf(args[0]) !== -1) {
-        user[message.author.id].platform = args[0]
-      } else {
-        message.reply(`Unsupported platform: ${args[0]}`)
-      }
-      break
-    case 'playerinfo': {
-      const gamerTag = args[0]
-      if (user[message.author.id] && user[message.author.id].platform) {
-        API.MWstats(gamerTag, API.platforms[user[message.author.id].platform])
-          .then(output => {
-            const { title, username, level, lifetime } = output
-            const msgEmbed = new MessageEmbed()
-            msgEmbed.setTitle(`${title.toUpperCase()} ${username} Level:${level}`)
-            msgEmbed.setDescription('Battle Royal stats:')
 
-            // set fields to show
-            const brObj = lifetime.mode.br.properties
-            Object.keys(brObj).forEach((item, key) => {
-              msgEmbed.addField(item, brObj[item], true)
-            })
+    const now = Date.now()
+    const timestamps = cooldowns.get(command.name)
+    const cooldownAmount = (command.cooldown || 3) * 1000
 
-            message.channel.send(msgEmbed)
-          })
-          .catch(err => {
-            console.log(err)
-          })
-      } else {
-        message.reply('set platform before... (!plaform <plaform_name>)')
+    if (timestamps.has(message.author.id)) {
+      const expirationTime = timestamps.get(message.author.id) + cooldownAmount
+
+      if (now < expirationTime) {
+        const timeLeft = (expirationTime - now) / 1000
+        return message.reply(
+          `please wait ${timeLeft.toFixed(
+            1
+          )} more second(s) before reusing the \`${command.name}\` command.`
+        )
       }
-      break
     }
-    default:
-      break
+
+    timestamps.set(message.author.id, now)
+    setTimeout(() => timestamps.delete(message.author.id), cooldownAmount)
+  }
+
+  try {
+    command.execute(message, args)
+  } catch (e) {
+    console.error(e)
+    message.reply('there was an error trying to execute that command!')
   }
 })
 
-bot.login(process.env.BOT_TOKEN)
+bot.on('error', err => {
+  console.error(err)
+})
+
+bot.login(BOT_TOKEN)
