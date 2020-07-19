@@ -1,91 +1,41 @@
-const { Client, MessageEmbed } = require('discord.js')
-const API = require('call-of-duty-api')()
+const { Client, Collection } = require('discord.js')
+const { commands } = require('./commands')
+const { BOT_PREFIX, BOT_TOKEN } = require('./config')
 
-// bot options
-const prefix = '!'
-const supportedPlatforms = ['psn', 'steam', 'xbl', 'battle', 'uno']
-const user = {}
-
+// bot client
 const bot = new Client()
+// bot commands collection
+bot.commands = new Collection()
+// set commands
+commands.forEach(command => bot.commands.set(command.name, command))
 
 bot.on('ready', () => {
   console.log('This bot is online!!!')
 })
 
 bot.on('message', message => {
-  if (message.content.charAt(0) !== prefix || message.author.bot) return
+  // do not response to bot message or message that starts with prefix
+  if (!message.content.startsWith(BOT_PREFIX) || message.author.bot) return
 
-  const args = message.content.slice(prefix.length).split(/ +/)
+  const args = message.content
+    .slice(BOT_PREFIX.length)
+    .trim()
+    .split(/ +/)
   const command = args.shift().toLowerCase()
-  user[message.author.id] = user[message.author.id] || {}
 
-  if (message.author.id === process.env.ADMIN_ID) {
-    // admin commands
-    switch (command) {
-      case 'server':
-        message.guild &&
-          message.reply(`This server's name is: ${message.guild.name}`)
-        break
-    }
-  }
+  // check if command exist
+  if (!bot.commands.has(command)) return
 
-  switch (command) {
-    case 'bothelp': {
-      const msgEmbed = new MessageEmbed()
-      msgEmbed.setTitle('D3xx0Bot help.')
-      msgEmbed.setDescription('Bot commands:')
-      msgEmbed.addField('set platform', '!platform <plataforma>', true)
-      msgEmbed.addField('get payer stats', '!playerinfo <gamertag>', true)
-      msgEmbed.addField('set login', '!login <username> <pass>', true)
-      message.channel.send(msgEmbed)
-      break
-    }
-    case 'login':
-      user[message.author.id].username = args[0]
-      user[message.author.id].password = args[1]
-      API.login(
-        user[message.author.id].username,
-        user[message.author.id].password
-      )
-        .then(res => console.log(res))
-        .catch(err => console.log(err))
-      break
-    case 'platform':
-      if (supportedPlatforms.indexOf(args[0]) !== -1) {
-        user[message.author.id].platform = args[0]
-      } else {
-        message.reply(`Unsupported platform: ${args[0]}`)
-      }
-      break
-    case 'playerinfo': {
-      const gamerTag = args[0]
-      if (user[message.author.id] && user[message.author.id].platform) {
-        API.MWstats(gamerTag, API.platforms[user[message.author.id].platform])
-          .then(output => {
-            const { title, username, level, lifetime } = output
-            const msgEmbed = new MessageEmbed()
-            msgEmbed.setTitle(`${title.toUpperCase()} ${username} Level:${level}`)
-            msgEmbed.setDescription('Battle Royal stats:')
-
-            // set fields to show
-            const brObj = lifetime.mode.br.properties
-            Object.keys(brObj).forEach((item, key) => {
-              msgEmbed.addField(item, brObj[item], true)
-            })
-
-            message.channel.send(msgEmbed)
-          })
-          .catch(err => {
-            console.log(err)
-          })
-      } else {
-        message.reply('set platform before... (!plaform <plaform_name>)')
-      }
-      break
-    }
-    default:
-      break
+  try {
+    bot.commands.get(command).execute(message, args)
+  } catch (e) {
+    console.error(e)
+    message.reply('there was an error trying to execute that command!')
   }
 })
 
-bot.login(process.env.BOT_TOKEN)
+bot.on('error', err => {
+  console.error(err)
+})
+
+bot.login(BOT_TOKEN)
