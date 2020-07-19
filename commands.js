@@ -93,8 +93,26 @@ function mapPlayerInfoResponse (type, message, response) {
       })
       break
     }
-    default: {
-      console.log(type, response)
+    case 'mp': {
+      const { title, username, level, lifetime } = response
+      msgEmbed.setTitle(`${title.toUpperCase()} ${username} Level:${level}`)
+      msgEmbed.setDescription(`${user[message.author.id].source} stats:`)
+      // set fields to show
+      const brObj = lifetime.all.properties
+      Object.keys(brObj).forEach((item, key) => {
+        msgEmbed.addField(item, brObj[item], true)
+      })
+      break
+    }
+    case 'mpcombat': {
+      const { summary } = response
+      msgEmbed.setTitle('MW Multiplayer summary')
+      msgEmbed.setDescription('summary stats:')
+      // set fields to show
+      const brObj = summary.all
+      Object.keys(brObj).forEach((item, key) => {
+        msgEmbed.addField(item, brObj[item], true)
+      })
       break
     }
   }

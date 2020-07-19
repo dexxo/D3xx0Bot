@@ -29,16 +29,20 @@ bot.on('message', message => {
   if (!command) return
 
   // check command arguments
-  if (command.hasAgrs && !command.hasAgrs.length) {
+  if (command.hasAgrs && !args.length) {
     let reply = `You didn't provide any arguments, ${message.author}!`
     if (command.usage) {
       reply += `\nThe proper usage would be: \`${command.usage}\``
     }
-    return message.channel.send(reply).then(msg => msg.delete(5000))
+    return message.channel.send(reply)
   }
 
   // check command cool down
   if (command.cooldown) {
+    if (!cooldowns.has(command.name)) {
+      cooldowns.set(command.name, new Collection())
+    }
+
     const now = Date.now()
     const timestamps = cooldowns.get(command.name)
     const cooldownAmount = (command.cooldown || 3) * 1000
@@ -48,13 +52,11 @@ bot.on('message', message => {
 
       if (now < expirationTime) {
         const timeLeft = (expirationTime - now) / 1000
-        return message
-          .reply(
-            `please wait ${timeLeft.toFixed(
-              1
-            )} more second(s) before reusing the \`${command.name}\` command.`
-          )
-          .then(msg => msg.delete(5000))
+        return message.reply(
+          `please wait ${timeLeft.toFixed(
+            1
+          )} more second(s) before reusing the \`${command.name}\` command.`
+        )
       }
     }
 
@@ -66,9 +68,7 @@ bot.on('message', message => {
     command.execute(message, args)
   } catch (e) {
     console.error(e)
-    message
-      .reply('there was an error trying to execute that command!')
-      .then(msg => msg.delete(5000))
+    message.reply('there was an error trying to execute that command!')
   }
 })
 
